@@ -9,6 +9,7 @@
 typedef struct {
     char name[16];
     uint8_t *buffer;
+    uint16_t data_length;
     TaskHandle_t task;
 } ConsoleInfo;
 

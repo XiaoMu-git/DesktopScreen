@@ -8,6 +8,7 @@ uint32_t count = 0;
 void setup() {
     XM_ledInit();
     XM_uart0Init();
+    XM_consoleInit();
 }
 
 void loop() {

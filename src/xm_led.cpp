@@ -8,7 +8,7 @@ void XM_ledInit() {
         led_blue_info.pin = 2;
         led_blue_info.mode = LED_MODE_OFF;
         led_blue_info.event_group = xEventGroupCreate();
-        xTaskCreatePinnedToCore(XM_ledTask, "led_task", 2048, &led_blue_info, 10, &(led_blue_info.task), 0);
+        xTaskCreate(XM_ledTask, "led_task", 2048, &led_blue_info, 10, &(led_blue_info.task));
     }
 }
 

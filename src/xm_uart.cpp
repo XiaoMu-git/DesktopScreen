@@ -11,7 +11,7 @@ void XM_uart0Init() {
         uart0_info.uart = &Serial;
         uart0_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
         uart0_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        xTaskCreatePinnedToCore(XM_uartTask, "uart0_task", 2048, &uart0_info, 10, &(uart0_info.task), 0);
+        xTaskCreate(XM_uartTask, "uart0_task", 2048, &uart0_info, 10, &(uart0_info.task));
     }
 }
 
@@ -33,7 +33,7 @@ void XM_uart2Init() {
         uart2_info.uart = &Serial2;
         uart2_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
         uart2_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        xTaskCreate(XM_uartTask, "uart2_task", 1024, &uart2_info, 10, &(uart2_info.task));
+        xTaskCreate(XM_uartTask, "uart2_task", 2048, &uart2_info, 10, &(uart2_info.task));
     }
 }
 
@@ -48,12 +48,10 @@ void XM_uartTask(void *param) {
             data_len = 0;
             message.data = new uint8_t[message.length];
             memcpy(message.data, buffer, message.length);
-            BaseType_t res = xQueueSend(uart_info->rx_queue, &message, 0);
-            if (res == pdPASS) {
+            if (xQueueSend(uart_info->rx_queue, &message, 0) != pdPASS) {
                 Serial.printf("%s tx queue is full.\n", uart_info->name);
                 delete[] message.data;
             }
-            data_len = 0;
         }
         else vTaskDelay(100);
         Serial.printf("%s_thread running.\n", uart_info->name);
