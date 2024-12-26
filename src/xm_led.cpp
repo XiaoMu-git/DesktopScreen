@@ -4,11 +4,11 @@ LedInfo led_blue_info;
 
 void XM_ledInit() {
     if (led_blue_info.task == nullptr) {
-        led_blue_info.name = "led_blue";
+        strcpy(led_blue_info.name, "led_blue");
         led_blue_info.pin = 2;
         led_blue_info.mode = LED_MODE_OFF;
         led_blue_info.event_group = xEventGroupCreate();
-        xTaskCreate(XM_ledTask, "led_task", 1024, &led_blue_info, 2, &(led_blue_info.task));
+        xTaskCreatePinnedToCore(XM_ledTask, "led_task", 2048, &led_blue_info, 10, &(led_blue_info.task), 0);
     }
 }
 
@@ -16,10 +16,9 @@ void XM_ledTask(void *param) {
     LedInfo *led_info = (LedInfo*)param;
     pinMode(led_info->pin, OUTPUT);
     uint16_t event_flag = LED_MODE_OFF | LED_MODE_ON | LED_MODE_QUICK_FLASH | LED_MODE_SLOW_FLASH;
-    EventBits_t event_bit = 0;
     TickType_t start_tick = xTaskGetTickCount();
     while (true) {
-        event_bit = xEventGroupWaitBits(led_info->event_group, event_flag, pdTRUE, pdFALSE, 0);
+        EventBits_t event_bit = xEventGroupWaitBits(led_info->event_group, event_flag, pdTRUE, pdFALSE, 0);
         if (event_bit != 0) led_blue_info.mode = event_bit;
         switch (led_blue_info.mode) {
             case LED_MODE_OFF:

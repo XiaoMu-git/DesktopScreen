@@ -3,10 +3,12 @@
 ConsoleInfo console_info;
 
 void XM_consoleInit() {
-    XM_uart0Init();
-    console_info.name = "console";
-    console_info.buffer = new uint8_t[CONSOLE_BUFFER_SIZE];
-    xTaskCreate(XM_consoleTask, "console_task", 1024, &console_info, 10, &(console_info.task));
+    if (console_info.task != nullptr) {
+        XM_uart0Init();
+        strcpy(console_info.name, "console");
+        console_info.buffer = new uint8_t[CONSOLE_BUFFER_SIZE];
+        xTaskCreatePinnedToCore(XM_consoleTask, "console_task", 1024, &console_info, 10, &(console_info.task), 0);
+    }
 }
 
 void XM_consoleTask(void *param) {

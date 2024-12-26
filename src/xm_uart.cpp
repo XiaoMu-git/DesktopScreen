@@ -7,33 +7,33 @@ UartInfo uart2_info;
 void XM_uart0Init() {
     if (uart0_info.task == nullptr) {
         Serial.begin(115200);
-        uart0_info.name = "uart0";
+        strcpy(uart0_info.name, "uart0");
         uart0_info.uart = &Serial;
         uart0_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
         uart0_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        xTaskCreate(XM_uartTask, "uart0_task", 1024, &uart0_info, 15, &(uart0_info.task));
+        xTaskCreatePinnedToCore(XM_uartTask, "uart0_task", 2048, &uart0_info, 10, &(uart0_info.task), 0);
     }
 }
 
 void XM_uart1Init() {
     if (uart1_info.task == nullptr) {
         Serial1.begin(115200, SERIAL_8N1, RX1, TX1);
-        uart1_info.name = "uart1";
+        strcpy(uart1_info.name, "uart1");
         uart1_info.uart = &Serial1;
         uart1_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
         uart1_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        xTaskCreate(XM_uartTask, "uart1_task", 1024, &uart1_info, 15, &(uart1_info.task));
+        xTaskCreate(XM_uartTask, "uart1_task", 2048, &uart1_info, 10, &(uart1_info.task));
     }
 }
 
 void XM_uart2Init() {
     if (uart2_info.task == nullptr) {
         Serial2.begin(115200, SERIAL_8N1, RX2, TX2);
-        uart2_info.name = "uart2";
+        strcpy(uart2_info.name, "uart2");
         uart2_info.uart = &Serial2;
         uart2_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
         uart2_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        xTaskCreate(XM_uartTask, "uart2_task", 1024, &uart2_info, 15, &(uart2_info.task));
+        xTaskCreate(XM_uartTask, "uart2_task", 1024, &uart2_info, 10, &(uart2_info.task));
     }
 }
 

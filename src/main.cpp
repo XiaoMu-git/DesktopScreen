@@ -1,18 +1,17 @@
 #include <Arduino.h>
+#include "xm_led.h"
+#include "xm_uart.h"
+#include "xm_console.h"
 
-// put function declarations here:
-int myFunction(int, int);
+uint32_t count = 0;
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+    XM_ledInit();
+    XM_uart0Init();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+    xEventGroupSetBits(led_blue_info.event_group, 1 << (count++ % 4));
+    Serial.printf("loop_thread running.\n");
+    vTaskDelay(3000);
 }

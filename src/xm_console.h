@@ -7,7 +7,7 @@
 #define     CONSOLE_BUFFER_SIZE     10 * 1024
 
 typedef struct {
-    char *name;
+    char name[16];
     uint8_t *buffer;
     TaskHandle_t task;
 } ConsoleInfo;

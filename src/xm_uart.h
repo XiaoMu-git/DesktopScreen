@@ -12,7 +12,7 @@ typedef struct {
 } Message;
 
 typedef struct {
-    char *name;
+    char name[16];
     HardwareSerial *uart;
     QueueHandle_t rx_queue;
     QueueHandle_t tx_queue;

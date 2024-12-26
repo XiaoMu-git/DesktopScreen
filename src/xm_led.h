@@ -9,7 +9,7 @@
 #define     LED_MODE_SLOW_FLASH     (1 << 3)
 
 typedef struct {
-    char *name;
+    char name[16];
     uint8_t pin;
     uint16_t mode;
     EventGroupHandle_t event_group;
