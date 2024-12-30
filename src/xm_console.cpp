@@ -19,10 +19,8 @@ void XM_consoleTask(void *param) {
         if (xQueueReceive(uart0_info.rx_queue, &message, portMAX_DELAY) == pdPASS) {
             if (console_info->data_length + message.length <= CONSOLE_BUFFER_SIZE) {
                 // 将数据读到缓存区
-                memcpy(console_info->buffer + console_info->data_length, message.data, message.length);
                 
                 // 然后从缓存区读取正确的报文
-                
 
                 // 之后执行报文指令
             }
