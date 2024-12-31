@@ -1,4 +1,4 @@
-#include "xm_config.h"
+#include "xm_configer.h"
 
 ConfigerInfo configer_info;
 

@@ -1,5 +1,5 @@
-#ifndef _XM_CONSOLE_H_
-#define _XM_CONSOLE_H_
+#ifndef _XM_CONFIGER_H_
+#define _XM_CONFIGER_H_
 
 #include <Arduino.h>
 #include "xm_uart.h"
@@ -29,4 +29,4 @@ void XM_configerTask(void *param);
 Message* XM_configerGetMessage(ConfigerInfo *configer_info);
 bool XM_configerDoCmd(Message* message);
 
-#endif // !_XM_CONSOLE_H_
+#endif // !_XM_CONFIGER_H_
