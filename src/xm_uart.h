@@ -9,7 +9,7 @@
 typedef struct {
     uint16_t length;
     uint8_t *data;
-} Message;
+} DataBlock;
 
 typedef struct {
     char name[16];

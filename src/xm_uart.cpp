@@ -9,8 +9,8 @@ void XM_uart0Init() {
         Serial.begin(115200);
         strcpy(uart0_info.name, "uart0");
         uart0_info.uart = &Serial;
-        uart0_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        uart0_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
+        uart0_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
+        uart0_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
         xTaskCreate(XM_uartTask, "uart0_task", 2048, &uart0_info, 10, &(uart0_info.task));
     }
 }
@@ -20,8 +20,8 @@ void XM_uart1Init() {
         Serial1.begin(115200, SERIAL_8N1, RX1, TX1);
         strcpy(uart1_info.name, "uart1");
         uart1_info.uart = &Serial1;
-        uart1_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        uart1_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
+        uart1_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
+        uart1_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
         xTaskCreate(XM_uartTask, "uart1_task", 2048, &uart1_info, 10, &(uart1_info.task));
     }
 }
@@ -31,8 +31,8 @@ void XM_uart2Init() {
         Serial2.begin(115200, SERIAL_8N1, RX2, TX2);
         strcpy(uart2_info.name, "uart2");
         uart2_info.uart = &Serial2;
-        uart2_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
-        uart2_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(Message));
+        uart2_info.rx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
+        uart2_info.tx_queue = xQueueCreate(UART_QUEUE_SIZE, sizeof(DataBlock));
         xTaskCreate(XM_uartTask, "uart2_task", 2048, &uart2_info, 10, &(uart2_info.task));
     }
 }
@@ -42,9 +42,11 @@ void XM_uartTask(void *param) {
     uint8_t buffer[UART_RECV_BUFFER_SIZE];
     uint16_t data_len = 0;
     while (true) {
+        // 读出缓存区所有的数据
         while (uart_info->uart->available() && data_len <= UART_RECV_BUFFER_SIZE) buffer[data_len++] = uart_info->uart->read();
         if (data_len > 0) {
-            Message message = { data_len ,nullptr };
+            // 谁使用这个报文谁来释放
+            DataBlock message = { data_len ,nullptr };
             data_len = 0;
             message.data = new uint8_t[message.length];
             memcpy(message.data, buffer, message.length);
