@@ -1,0 +1,26 @@
+#ifndef _XM_UART_H_
+#define _XM_UART_H_
+
+#include <Arduino.h>
+#include "config.h"
+#include "message.h"
+
+typedef struct {
+    char name[16];
+    uint8_t *buffer;
+    uint16_t data_len;
+    HardwareSerial *uart;
+    QueueHandle_t rx_queue;
+    QueueHandle_t tx_queue;
+    TaskHandle_t task;
+} UartInfo;
+
+extern UartInfo uart0_info;
+extern UartInfo uart1_info;
+
+void XM_uart0Start();
+void XM_uart1Start();
+void XM_uart1Task(void *param);
+void XM_uart2Task(void *param);
+
+#endif // !_XM_UART_H_
