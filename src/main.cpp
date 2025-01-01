@@ -1,10 +1,10 @@
 #include <Arduino.h>
-#include "Message.h"
+#include "xm_uart.h"
 
 void setup() {
-	int a = sizeof(Message);
+	XM_uart0Start();
 }
 
 void loop() {
-	
+    vTaskDelay(1000);
 }

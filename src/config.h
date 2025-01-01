@@ -10,10 +10,15 @@
 #define STACK_SIZE_MEDIUM       4096
 #define STACK_SIZE_LARGE        8192
 
-/*uart*/
+/*Message*/
+#define MSG_HEAD                0xBE;
+#define MSG_END                 0xED;
+
+/*Uart*/
 #define UART_RECV_BUFFER_SIZE   10240
-#define UART_MESSAGE_QUEUE_SIZE 64
+#define UART_MSG_QUEUE_SIZE     64
 
-
+/*Log*/
+#define LOG_MSG_QUEUE_SIZE      64
 
 #endif // !_CONFIG_H_
