@@ -20,6 +20,6 @@ extern LogInfo log_info;
 
 void XM_logStart();
 void XM_logTask(void *param);
-void XM_logSend(uint8_t level, char* info, ...);
+void XM_logSend(uint8_t level, const char* info, ...);
 
 #endif // !_LOG_H_

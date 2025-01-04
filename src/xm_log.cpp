@@ -4,7 +4,7 @@ LogInfo log_info;
 
 void XM_logStart() {
     XM_uart0Start();
-    if (log_info.task == null) {
+    if (log_info.task == nullptr) {
         strcpy(log_info.name, "log");
         log_info.tx_queue = xQueueCreate(LOG_MSG_QUEUE_SIZE, sizeof(void*));
         xTaskCreate(XM_logTask, "log_task", STACK_SIZE_MEDIUM, &log_info, TASK_PRIORITY_MEDIUM, &(log_info.task));
@@ -23,6 +23,15 @@ void XM_logTask(void *param) {
     }
 }
 
-void XM_logSend(uint8_t level, char* info, ...) {
+void XM_logSend(uint8_t level, const char* info, ...) {
     MsgLog *msg_log = new MsgLog();
+    msg_log->type = level;
+
+    va_list args;
+    va_start(args, info);
+    vsnprintf((char*)msg_log->data, sizeof(msg_log->data), info, args);
+    va_end(args);
+
+    msg_log->updateCheck();
+    if (xQueueSend(log_info.tx_queue, &msg_log, 0) != pdPASS) delete msg_log;
 }

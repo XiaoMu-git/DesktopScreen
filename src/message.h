@@ -16,7 +16,7 @@ enum MSG_TYPE {
     MSG_TYPE_STATE = 0x40,
     MSG_TYPE_STATE_RECEIVE_OK,
     MSG_TYPE_LOG = 0x50,
-    MSG_TYPE_LOG_PROMPT,
+    MSG_TYPE_LOG_INFO,
     MSG_TYPE_LOG_WARNING,
     MSG_TYPE_LOG_ERROR
 };
@@ -29,44 +29,54 @@ public:
     Message();
 };
 
-class MsgCmd : Message {
+class MsgCmd : public Message {
 public:
     uint8_t data[8];
     uint8_t check;
     uint8_t end;
     MsgCmd();
+    void updateCheck();
+    bool calculate();
 };
 
-class MsgData : Message {
+class MsgData : public Message {
 public:
     uint8_t data[128];
     uint8_t check;
     uint8_t end;
     MsgData();
+    void updateCheck();
+    bool calculate();
 };
 
-class MsgState : Message {
+class MsgState : public Message {
 public:
     uint8_t data[8];
     uint8_t check;
     uint8_t end;
     MsgState();
+    void updateCheck();
+    bool calculate();
 };
 
-class MsgReq : Message {
+class MsgReq : public Message {
 public:
     uint8_t data[8];
     uint8_t check;
     uint8_t end;
     MsgReq();
+    void updateCheck();
+    bool calculate();
 };
 
-class MsgLog : Message {
+class MsgLog : public Message {
 public:
     uint8_t data[64];
     uint8_t check;
     uint8_t end;
     MsgLog();
+    void updateCheck();
+    bool calculate();
 };
 
 #endif // !_MSG_H_

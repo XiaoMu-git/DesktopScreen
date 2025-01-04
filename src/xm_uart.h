@@ -16,11 +16,11 @@ typedef struct {
 } UartInfo;
 
 extern UartInfo uart0_info;
-extern UartInfo uart1_info;
+// extern UartInfo uart1_info;
 
 void XM_uart0Start();
-void XM_uart1Start();
+// void XM_uart1Start();
 void XM_uart0Task(void *param);
-void XM_uart1Task(void *param);
+// void XM_uart1Task(void *param);
 
 #endif // !_XM_UART_H_

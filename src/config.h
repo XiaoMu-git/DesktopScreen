@@ -11,8 +11,8 @@
 #define STACK_SIZE_LARGE        8192
 
 /*Message*/
-#define MSG_HEAD                0xBE;
-#define MSG_END                 0xED;
+#define MSG_HEAD                0xBE
+#define MSG_END                 0xED
 
 /*Uart*/
 #define UART_RECV_BUFFER_SIZE   10240
