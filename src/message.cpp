@@ -24,7 +24,7 @@ void MsgCmd::updateCheck() {
 bool MsgCmd::calculate() {
     uint8_t check = 0x00;
     for (int i = 0; i < sizeof(this->data); i++) check += this->data[i];
-    return this->check == check;
+    return this->head == MSG_HEAD && this->check == check && this->end == MSG_END;
 }
 
 /*MsgData*/
@@ -44,7 +44,7 @@ void MsgData::updateCheck() {
 bool MsgData::calculate() {
     uint8_t check = 0x00;
     for (int i = 0; i < sizeof(this->data); i++) check += this->data[i];
-    return this->check == check;
+    return this->head == MSG_HEAD && this->check == check && this->end == MSG_END;
 }
 
 /*MsgState*/
@@ -64,7 +64,7 @@ void MsgState::updateCheck() {
 bool MsgState::calculate() {
     uint8_t check = 0x00;
     for (int i = 0; i < sizeof(this->data); i++) check += this->data[i];
-    return this->check == check;
+    return this->head == MSG_HEAD && this->check == check && this->end == MSG_END;
 }
 
 /*MsgReq*/
@@ -84,7 +84,7 @@ void MsgReq::updateCheck() {
 bool MsgReq::calculate() {
     uint8_t check = 0x00;
     for (int i = 0; i < sizeof(this->data); i++) check += this->data[i];
-    return this->check == check;
+    return this->head == MSG_HEAD && this->check == check && this->end == MSG_END;
 }
 
 /*MsgLog*/
@@ -104,5 +104,5 @@ void MsgLog::updateCheck() {
 bool MsgLog::calculate() {
     uint8_t check = 0x00;
     for (int i = 0; i < sizeof(this->data); i++) check += this->data[i];
-    return this->check == check;
+    return this->head == MSG_HEAD && this->check == check && this->end == MSG_END;
 }

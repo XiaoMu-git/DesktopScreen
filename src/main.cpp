@@ -6,6 +6,6 @@ void setup() {
 }
 
 void loop() {
-    LOG_INFO("Hello Log %d\n", 10);
+    // LOG_INFO("Hello Log %d\n", 10);
     vTaskDelay(1000);
 }

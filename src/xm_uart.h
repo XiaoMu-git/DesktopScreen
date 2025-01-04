@@ -22,5 +22,7 @@ void XM_uart0Start();
 // void XM_uart1Start();
 void XM_uart0Task(void *param);
 // void XM_uart1Task(void *param);
+template <typename MsgType>
+bool checkMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue);
 
 #endif // !_XM_UART_H_

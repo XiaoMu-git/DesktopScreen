@@ -7,10 +7,10 @@ void XM_uart0Start() {
     if (uart0_info.task == nullptr) {
         Serial.begin(115200);
         strcpy(uart0_info.name, "uart0");
-        uart0_info.buffer = nullptr;
+        uart0_info.buffer = new uint8_t[UART_RECV_BUFFER_SIZE];
         uart0_info.data_len = 0;
         uart0_info.uart = &Serial;
-        uart0_info.rx_queue = nullptr;
+        uart0_info.rx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
         uart0_info.tx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
         xTaskCreate(XM_uart0Task, "uart0_task", STACK_SIZE_MEDIUM, &uart0_info, TASK_PRIORITY_MEDIUM, &(uart0_info.task));
     }
@@ -31,19 +31,51 @@ void XM_uart0Start() {
 
 void XM_uart0Task(void *param) {
     UartInfo *uart_info = (UartInfo*)param;
+    Message *msg = nullptr;
     auto &name = uart_info->name;
+    auto &buffer = uart_info->buffer;
+    auto &data_len = uart_info->data_len;
     auto &uart = uart_info->uart;
+    auto &rx_queue = uart_info->rx_queue;
     auto &tx_queue = uart_info->tx_queue;
-    MsgLog *msg_log = nullptr;
     while (true) {
-        while (uart->available()) uart->read();
-        if (xQueueReceive(tx_queue, &msg_log, portMAX_DELAY) == pdPASS) {
-            if (msg_log != nullptr) {
-                uart->write((uint8_t*)msg_log, msg_log->length);
-                delete msg_log;
-                msg_log = nullptr;
+        /*接收数据*/
+        while (uart->available() && data_len < UART_RECV_BUFFER_SIZE) buffer[data_len++] = uart->read();
+        while (data_len > 0 && buffer[0] != MSG_HEAD) memmove(buffer, buffer + 1, --data_len);
+        if (data_len > MSG_MAX_LENGTH) buffer[0] = 0xFF;
+        else if (data_len >= sizeof(Message)) {
+            msg = (Message*)buffer;
+            if (data_len >= msg->length) {
+                bool is_success = false;
+                if ((msg->type & 0xF0) == MSG_TYPE_CMD) {
+                    checkMsg<MsgCmd>(buffer, data_len, rx_queue);
+                }
+                else if ((msg->type & 0xF0) == MSG_TYPE_DATA) {
+                    checkMsg<MsgData>(buffer, data_len, rx_queue);
+                }
+                else if ((msg->type & 0xF0) == MSG_TYPE_REQUEST) {
+                    checkMsg<MsgReq>(buffer, data_len, rx_queue);
+                }
+                else if ((msg->type & 0xF0) == MSG_TYPE_STATE) {
+                    checkMsg<MsgState>(buffer, data_len, rx_queue);
+                }
+                else if ((msg->type & 0xF0) == MSG_TYPE_LOG) {
+                    checkMsg<MsgLog>(buffer, data_len, rx_queue);
+                }
             }
+            msg = nullptr;
         }
+
+        /*发送数据*/
+        if (xQueueReceive(tx_queue, &msg, 0) == pdPASS) {
+            if (msg != nullptr) {
+                uart->write((uint8_t*)msg, msg->length);
+                delete msg;
+                msg = nullptr;
+            }
+            continue;
+        }
+        vTaskDelay(100);
     }
 }
 
@@ -91,3 +123,17 @@ void XM_uart0Task(void *param) {
 //         vTaskDelay(100);
 //     }
 // }
+
+template <typename MsgType>
+bool checkMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue) {
+    MsgType *msg_req = (MsgType*)buffer;
+    if (msg_req->calculate()) {
+        MsgType *recv_msg_req = new MsgReq();
+        memcpy(recv_msg_req, buffer, msg_req->length);
+        memmove(buffer, buffer + msg_req->length, data_len -= msg_req->length);
+        if (xQueueSend(rx_queue, &recv_msg_req, 0) == pdPASS) return true;
+        else delete recv_msg_req;
+    }
+    buffer[0] = 0xFF;
+    return false;
+}

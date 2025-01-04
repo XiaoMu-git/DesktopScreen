@@ -1,0 +1,4 @@
+获取位置API
+https://restapi.amap.com/v3/ip?key=ad87b9d11bdc6e97a4e746f5656536b5
+获取天气状况API
+https://restapi.amap.com/v3/weather/weatherInfo?key=ad87b9d11bdc6e97a4e746f5656536b5&city=370214&extensions=all

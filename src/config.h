@@ -13,9 +13,10 @@
 /*Message*/
 #define MSG_HEAD                0xBE
 #define MSG_END                 0xED
+#define MSG_MAX_LENGTH          0x00FF
 
 /*Uart*/
-#define UART_RECV_BUFFER_SIZE   10240
+#define UART_RECV_BUFFER_SIZE   65536
 #define UART_MSG_QUEUE_SIZE     64
 
 /*Log*/
