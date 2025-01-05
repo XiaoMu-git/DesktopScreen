@@ -1,18 +1,17 @@
 #include "xm_uart.h"
 
-UartInfo uart0_info;
-// UartInfo uart1_info;
+UartInfo uart_info[2];
 
 void XM_uart0Start() {
-    if (uart0_info.task == nullptr) {
+    if (uart_info[0].task == nullptr) {
         Serial.begin(115200);
-        strcpy(uart0_info.name, "uart0");
-        uart0_info.buffer = new uint8_t[UART_RECV_BUFFER_SIZE];
-        uart0_info.data_len = 0;
-        uart0_info.uart = &Serial;
-        uart0_info.rx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
-        uart0_info.tx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
-        xTaskCreate(XM_uart0Task, "uart0_task", STACK_SIZE_MEDIUM, &uart0_info, TASK_PRIORITY_MEDIUM, &(uart0_info.task));
+        strcpy(uart_info[0].name, "uart0");
+        uart_info[0].buffer = new uint8_t[UART_RECV_BUFFER_SIZE];
+        uart_info[0].data_len = 0;
+        uart_info[0].uart = &Serial;
+        uart_info[0].rx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
+        uart_info[0].tx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
+        xTaskCreate(XM_uart0Task, "uart0_task", STACK_SIZE_MEDIUM, &uart_info[0], TASK_PRIORITY_MEDIUM, &(uart_info[0].task));
     }
 }
 
@@ -42,27 +41,27 @@ void XM_uart0Task(void *param) {
         /*接收数据*/
         while (uart->available() && data_len < UART_RECV_BUFFER_SIZE) buffer[data_len++] = uart->read();
         while (data_len > 0 && buffer[0] != MSG_HEAD) memmove(buffer, buffer + 1, --data_len);
-        if (data_len > MSG_MAX_LENGTH) buffer[0] = 0xFF;
-        else if (data_len >= sizeof(Message)) {
+        if (data_len >= sizeof(Message)) {
             msg = (Message*)buffer;
             if (data_len >= msg->length) {
                 bool is_success = false;
                 if ((msg->type & 0xF0) == MSG_TYPE_CMD) {
-                    checkMsg<MsgCmd>(buffer, data_len, rx_queue);
+                    XM_uartCheckMsg<MsgCmd>(buffer, data_len, rx_queue);
                 }
                 else if ((msg->type & 0xF0) == MSG_TYPE_DATA) {
-                    checkMsg<MsgData>(buffer, data_len, rx_queue);
+                    XM_uartCheckMsg<MsgData>(buffer, data_len, rx_queue);
                 }
                 else if ((msg->type & 0xF0) == MSG_TYPE_REQUEST) {
-                    checkMsg<MsgReq>(buffer, data_len, rx_queue);
+                    XM_uartCheckMsg<MsgReq>(buffer, data_len, rx_queue);
                 }
                 else if ((msg->type & 0xF0) == MSG_TYPE_STATE) {
-                    checkMsg<MsgState>(buffer, data_len, rx_queue);
+                    XM_uartCheckMsg<MsgState>(buffer, data_len, rx_queue);
                 }
                 else if ((msg->type & 0xF0) == MSG_TYPE_LOG) {
-                    checkMsg<MsgLog>(buffer, data_len, rx_queue);
+                    XM_uartCheckMsg<MsgLog>(buffer, data_len, rx_queue);
                 }
             }
+            else if (msg->length > MSG_MAX_LENGTH) buffer[0] = 0xFF;
             msg = nullptr;
         }
 
@@ -73,9 +72,8 @@ void XM_uart0Task(void *param) {
                 delete msg;
                 msg = nullptr;
             }
-            continue;
         }
-        vTaskDelay(100);
+        vTaskDelay(10);
     }
 }
 
@@ -125,14 +123,14 @@ void XM_uart0Task(void *param) {
 // }
 
 template <typename MsgType>
-bool checkMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue) {
-    MsgType *msg_req = (MsgType*)buffer;
-    if (msg_req->calculate()) {
-        MsgType *recv_msg_req = new MsgReq();
-        memcpy(recv_msg_req, buffer, msg_req->length);
-        memmove(buffer, buffer + msg_req->length, data_len -= msg_req->length);
-        if (xQueueSend(rx_queue, &recv_msg_req, 0) == pdPASS) return true;
-        else delete recv_msg_req;
+bool XM_uartCheckMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue) {
+    MsgType *buf_msg = (MsgType*)buffer;
+    if (buf_msg->calculate()) {
+        MsgType *recv_msg = new MsgType();
+        memcpy(recv_msg, buffer, buf_msg->length);
+        memmove(buffer, buffer + buf_msg->length, data_len -= buf_msg->length);
+        if (xQueueSend(rx_queue, &recv_msg, 0) == pdPASS) return true;
+        else delete recv_msg;
     }
     buffer[0] = 0xFF;
     return false;

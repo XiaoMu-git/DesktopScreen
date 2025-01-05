@@ -15,14 +15,13 @@ typedef struct {
     TaskHandle_t task;
 } UartInfo;
 
-extern UartInfo uart0_info;
-// extern UartInfo uart1_info;
+extern UartInfo uart_info[2];
 
 void XM_uart0Start();
 // void XM_uart1Start();
 void XM_uart0Task(void *param);
 // void XM_uart1Task(void *param);
 template <typename MsgType>
-bool checkMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue);
+bool XM_uartCheckMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue);
 
 #endif // !_XM_UART_H_
