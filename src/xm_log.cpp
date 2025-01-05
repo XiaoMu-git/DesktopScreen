@@ -1,12 +1,5 @@
 #include "xm_log.h"
 
-/*
-目前是用的串口0
-但是最终目标是
-串口1发送报文
-串口0发送明文
-*/
-
 LogInfo log_info[1];
 
 void XM_logStart() {
