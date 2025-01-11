@@ -1,9 +1,6 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-/*System*/
-#define DEBU
-
 /*FreeRTOS*/
 #define TASK_PRIORITY_LOW       5
 #define TASK_PRIORITY_MEDIUM    10
@@ -33,5 +30,10 @@
 #define UDP_RECV_BUFFER_SIZE    10240
 #define UDP_MSG_QUEUE_SIZE      64
 #define UDP_PORT                20000
+
+/*HTTP*/
+#define HTTP_ADDRESS_URL        "https://restapi.amap.com/v3/ip?key=ad87b9d11bdc6e97a4e746f5656536b5"
+#define HTTP_WEATHRE_URL        "https://restapi.amap.com/v3/weather/weatherInfo?key=ad87b9d11bdc6e97a4e746f5656536b5&city=370214&extensions=all"
+#define HTTP_TIME_URL           "https://sapi.k780.com/?app=life.time&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4&format=json"
 
 #endif // !_CONFIG_H_

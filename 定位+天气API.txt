@@ -2,3 +2,5 @@
 https://restapi.amap.com/v3/ip?key=ad87b9d11bdc6e97a4e746f5656536b5
 获取天气状况API
 https://restapi.amap.com/v3/weather/weatherInfo?key=ad87b9d11bdc6e97a4e746f5656536b5&city=370214&extensions=all
+获取北京时间api
+https://sapi.k780.com/?app=life.time&appkey=10003&sign=b59bc3ef6191eb9f747dd4e83c99f2a4&format=json
