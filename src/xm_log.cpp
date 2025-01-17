@@ -3,42 +3,39 @@
 LogInfo log_info[1];
 
 void XM_logStart() {
-    XM_uart0Start();
-    XM_udpStart();
-    if (log_info[0].task == nullptr) {
-        strcpy(log_info[0].name, "log");
-        log_info[0].uart_info = &uart_info[0];
-        log_info[0].udp_info = &udp_info[0];
-        log_info[0].tx_queue = xQueueCreate(LOG_MSG_QUEUE_SIZE, sizeof(void*));
-        xTaskCreate(XM_logTask, "log_task", STACK_SIZE_MEDIUM, &log_info[0], TASK_PRIORITY_MEDIUM, &(log_info[0].task));
-    }
+    strcpy(log_info[0].name, "log");
+    log_info[0].tx_queue = xQueueCreate(LOG_MSG_QUEUE_SIZE, sizeof(void*));
+    xTaskCreate(XM_logTask, "log_task", STACK_SIZE_MEDIUM, &log_info[0], TASK_PRIORITY_MEDIUM, &(log_info[0].task));
 }
 
-void XM_logTask(void *param) {
-    LogInfo *log_info = (LogInfo*)param;
-    auto &name = log_info->name;
-    auto &uart_info = log_info->uart_info;
-    auto &udp_info = log_info->udp_info;
+void XM_logTask(void* param) {
+    LogInfo* log_info = (LogInfo*)param;
     auto &tx_queue = log_info->tx_queue;
-    MsgLog *msg_log = nullptr;
+    MsgLog* msg_log = nullptr;
+
+    LOG_INFO("log_task is running.");
     while (true) {
         if (xQueueReceive(tx_queue, &msg_log, portMAX_DELAY) == pdPASS) {
-            MsgLog *msg_log_uart = new MsgLog();
-            memcpy(msg_log_uart, msg_log, sizeof(MsgLog));
-            xQueueSend(uart_info->tx_queue, &msg_log_uart, 0);
+            if (uart_info[0].send_task != nullptr) {
+                MsgLog* msg_log_uart = new MsgLog();
+                memcpy(msg_log_uart, msg_log, sizeof(MsgLog));
+                xQueueSend(uart_info[0].tx_queue, &msg_log_uart, 0);
+            }
 
-            MsgLog *msg_log_udp = new MsgLog();
-            memcpy(msg_log_udp, msg_log, sizeof(MsgLog));
-            xQueueSend(udp_info->tx_queue, &msg_log_udp, 0);
-            
+            if (udp_info[0].send_task != nullptr) {
+                MsgLog* msg_log_udp = new MsgLog();
+                memcpy(msg_log_udp, msg_log, sizeof(MsgLog));
+                xQueueSend(udp_info[0].tx_queue, &msg_log_udp, 0);
+            }
+
             delete msg_log;
+            msg_log = nullptr;
         }
-        vTaskDelay(10);
     }
 }
 
 void XM_logSendMsg(uint8_t level, const char* info, ...) {
-    MsgLog *msg_log = new MsgLog();
+    MsgLog* msg_log = new MsgLog();
     msg_log->type = level;
 
     va_list args;

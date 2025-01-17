@@ -4,22 +4,12 @@
 #include <Arduino.h>
 #include "config.h"
 #include "message.h"
+#include "xm_log.h"
 
-typedef struct {
-    char name[16];
-    uint8_t *buffer;
-    uint16_t data_len;
-    HardwareSerial *uart;
-    QueueHandle_t rx_queue;
-    QueueHandle_t tx_queue;
-    TaskHandle_t task;
-} UartInfo;
-
-extern UartInfo uart_info[1];
-
-void XM_uart0Start();
-void XM_uart0Task(void *param);
+void XM_uartStart();
+void XM_uartRecvTask(void* param);
+void XM_uartSendTask(void* param);
 template <typename MsgType>
-bool XM_uartCheckMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue);
+MsgType* XM_uartCheckMsg(uint8_t* buffer, uint16_t &data_len);
 
 #endif // !_XM_UART_H_

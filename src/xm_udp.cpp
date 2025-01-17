@@ -3,98 +3,116 @@
 UdpInfo udp_info[1];
 
 void XM_udpStart() {
-    if (udp_info[0].task == nullptr) {
-        Serial.begin(115200);
-        strcpy(udp_info[0].name, "udp");
-        udp_info[0].buffer = new uint8_t[UDP_RECV_BUFFER_SIZE];
-        udp_info[0].data_len = 0;
-        udp_info[0].udp = WiFiUDP();
-        udp_info[0].rx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
-        udp_info[0].tx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
-        xTaskCreate(XM_udpTask, "udp_task", STACK_SIZE_MEDIUM, &udp_info[0], TASK_PRIORITY_MEDIUM, &(udp_info[0].task));
-    }
+    strcpy(udp_info[0].name, "udp");
+    udp_info[0].buffer = new uint8_t[UDP_RECV_BUFFER_SIZE];
+    udp_info[0].data_len = 0;
+    udp_info[0].tx_queue = xQueueCreate(UART_MSG_QUEUE_SIZE, sizeof(void*));
+
+    xTaskCreate(XM_udpRecvTask, "udp_recv_task", STACK_SIZE_MEDIUM, &udp_info[0], TASK_PRIORITY_MEDIUM, &(udp_info[0].recv_task));
+    xTaskCreate(XM_udpSendTask, "udp_send_task", STACK_SIZE_MEDIUM, &udp_info[0], TASK_PRIORITY_MEDIUM, &(udp_info[0].send_task));
 }
 
-void XM_udpTask(void *param) {
-    UdpInfo *udp_info = (UdpInfo*)param;
-    Message *msg = nullptr;
-    auto &name = udp_info->name;
-    auto &buffer = udp_info->buffer;
-    auto &data_len = udp_info->data_len;
-    auto &udp = udp_info->udp;
-    auto &rx_queue = udp_info->rx_queue;
-    auto &tx_queue = udp_info->tx_queue;
+void XM_udpRecvTask(void* param) {
+    UdpInfo* udp_info = (UdpInfo*)param;
+    Message* recv_msg = nullptr;
+    auto &buffer = udp_info[0].buffer;
+    auto &data_len = udp_info[0].data_len;
+    auto &udp = wifi_info[0].udp;
+    auto &tx_queue = udp_info[0].tx_queue;
+
     while (true) {
-        /*接收数据*/
-        if (XM_wifiConnect(udp)) {
-            while (udp.parsePacket()) {
-                udp.read(buffer + data_len, UDP_RECV_BUFFER_SIZE - data_len);
-            }
+        while (WiFi.status() == WL_CONNECTED && udp.parsePacket() > 0) {
+            int read_size = udp.read(buffer + data_len, UDP_RECV_BUFFER_SIZE - data_len);
+            if (read_size > 0) data_len += read_size;
         }
-        while (data_len > 0 && buffer[0] != MSG_HEAD) memmove(buffer, buffer + 1, --data_len);
+        while (data_len > 0 && buffer[0] != MSG_HEAD) memmove(buffer, buffer + 1, --data_len);  // 删除非包头的数据
         if (data_len >= sizeof(Message)) {
-            msg = (Message*)buffer;
-            if (data_len >= msg->length) {
-                bool is_success = false;
-                if ((msg->type & 0xF0) == MSG_TYPE_CMD) {
-                    XM_uartCheckMsg<MsgCmd>(buffer, data_len, rx_queue);
+            if (data_len >= ((Message*)buffer)->length) {
+                /* 检查不同报文的报文格式和校验和是否正确 */
+                if ((((Message*)buffer)->type & 0xF0) == MSG_TYPE_CMD) {
+                    recv_msg = XM_udpCheckMsg<MsgCmd>(buffer, data_len);
+                    if (recv_msg != nullptr) {
+                        MsgCmd* cmd = new MsgCmd();
+                        memcpy(cmd, recv_msg, sizeof(MsgCmd));
+                        xQueueSend(console_info[0].rx_queue, &cmd, 0);
+                    }
                 }
-                else if ((msg->type & 0xF0) == MSG_TYPE_DATA) {
-                    XM_uartCheckMsg<MsgData>(buffer, data_len, rx_queue);
+                else if ((((Message*)buffer)->type & 0xF0) == MSG_TYPE_DATA) {
+                    recv_msg = XM_udpCheckMsg<MsgData>(buffer, data_len);
+                    if (recv_msg != nullptr) {
+                        MsgData* data = new MsgData();
+                        memcpy(data, recv_msg, sizeof(MsgData));
+                        xQueueSend(console_info[0].rx_queue, &data, 0);
+                    }
                 }
-                else if ((msg->type & 0xF0) == MSG_TYPE_REQUEST) {
-                    XM_uartCheckMsg<MsgReq>(buffer, data_len, rx_queue);
+                else if ((((Message*)buffer)->type & 0xF0) == MSG_TYPE_REQUEST) {
+                    recv_msg = XM_udpCheckMsg<MsgReq>(buffer, data_len);
+                    if (recv_msg != nullptr) {
+                        MsgReq* req = new MsgReq();
+                        memcpy(req, recv_msg, sizeof(MsgReq));
+                        xQueueSend(console_info[0].rx_queue, &req, 0);
+                    }
                 }
-                else if ((msg->type & 0xF0) == MSG_TYPE_STATE) {
-                    XM_uartCheckMsg<MsgState>(buffer, data_len, rx_queue);
+                else if ((((Message*)buffer)->type & 0xF0) == MSG_TYPE_STATE) {
+                    recv_msg = XM_udpCheckMsg<MsgState>(buffer, data_len);
+                    if (recv_msg != nullptr) {
+                        MsgState* state = new MsgState();
+                        memcpy(state, recv_msg, sizeof(MsgState));
+                        xQueueSend(console_info[0].rx_queue, &state, 0);
+                    }
                 }
-                else if ((msg->type & 0xF0) == MSG_TYPE_LOG) {
-                    XM_uartCheckMsg<MsgLog>(buffer, data_len, rx_queue);
+                else if ((((Message*)buffer)->type & 0xF0) == MSG_TYPE_LOG) {
+                    recv_msg = XM_udpCheckMsg<MsgLog>(buffer, data_len);
+                    if (recv_msg != nullptr) {
+                        MsgLog* log = new MsgLog();
+                        memcpy(log, recv_msg, sizeof(MsgLog));
+                        xQueueSend(console_info[0].rx_queue, &log, 0);
+                    }
+                }
+                
+                if (recv_msg != nullptr) {
+                    delete recv_msg;
+                    recv_msg = nullptr;
                 }
             }
-            else if (msg->length > MSG_MAX_LENGTH) buffer[0] = 0xFF;
-            msg = nullptr;
+            else if (((Message*)buffer)->length > MSG_MAX_LENGTH) buffer[0] = 0xFF;    // 处理报文长度异常
+            else vTaskDelay(10);
         }
-
-        /*发送数据*/
-        if (xQueueReceive(tx_queue, &msg, 0) == pdPASS) {
-            if (msg != nullptr) {
-                udp.beginPacket(udp.remoteIP(), udp.remotePort());
-                udp.write((uint8_t*)msg, msg->length);
-                udp.endPacket();
-                delete msg;
-                msg = nullptr;
-            }
-        }
-        vTaskDelay(10);
+        else vTaskDelay(100);
     }
 }
 
-bool XM_wifiConnect(WiFiUDP &udp) {
-    if (WiFi.status() != WL_CONNECTED) {
-        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-        for (int i = 0; i < 30; i++) {
-            if (WiFi.status() == WL_CONNECTED) {
-                udp.begin(UDP_PORT);
-                break;
+void XM_udpSendTask(void* param) {
+    UdpInfo* udp_info = (UdpInfo*)param;
+    Message* send_msg = nullptr;
+    auto &udp = wifi_info[0].udp;
+    auto &tx_queue = udp_info[0].tx_queue;
+
+    while (true) {       
+        /*发送数据*/
+        if (xQueueReceive(tx_queue, &send_msg, portMAX_DELAY) == pdPASS) {
+            if (send_msg != nullptr) {
+                if (WiFi.status() == WL_CONNECTED) {
+                    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+                    udp.write((uint8_t*)send_msg, send_msg->length);
+                    udp.endPacket();
+                }
+                delete send_msg;
+                send_msg = nullptr;
             }
-            vTaskDelay(100);
         }
-        return WiFi.status() == WL_CONNECTED;
     }
-    return true;
 }
 
 template <typename MsgType>
-bool XM_uartCheckMsg(uint8_t *buffer, uint16_t &data_len, QueueHandle_t rx_queue) {
-    MsgType *buf_msg = (MsgType*)buffer;
+MsgType* XM_udpCheckMsg(uint8_t* buffer, uint16_t &data_len) {
+    MsgType* buf_msg = (MsgType*)buffer;
     if (buf_msg->calculate()) {
-        MsgType *recv_msg = new MsgType();
+        MsgType* recv_msg = new MsgType();
         memcpy(recv_msg, buffer, buf_msg->length);
         memmove(buffer, buffer + buf_msg->length, data_len -= buf_msg->length);
-        if (xQueueSend(rx_queue, &recv_msg, 0) == pdPASS) return true;
-        else delete recv_msg;
+        return recv_msg;
     }
     buffer[0] = 0xFF;
-    return false;
+    return nullptr;
 }
