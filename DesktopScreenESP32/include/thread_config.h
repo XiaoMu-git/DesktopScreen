@@ -74,9 +74,9 @@
 
 /* http */
 #define HTTP_SAMPLING_RATE          300000
-#define HTTP_TIME_URL               "https://cn.apihz.cn/api/time/getapi.php?id=88888888&key=88888888&type=2"
+#define HTTP_TIME_URL               "https://cn.apihz.cn/api/time/getapi.php?id=88888888&key=88888888&type=1"
 #define HTTP_ADDRESS_URL            "https://restapi.amap.com/v3/ip?key=ad87b9d11bdc6e97a4e746f5656536b5"
-#define HTTP_WEATHER_URL            "https://restapi.amap.com/v3/weather/weatherInfo?key=ad87b9d11bdc6e97a4e746f5656536b5&city=370600"
+#define HTTP_WEATHER_URL            "https://restapi.amap.com/v3/weather/weatherInfo?key=ad87b9d11bdc6e97a4e746f5656536b5&city=370600&extensions=all"
 
 /// @brief 初始化所有外设
 /// @param  

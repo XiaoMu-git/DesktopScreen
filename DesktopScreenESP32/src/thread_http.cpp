@@ -45,38 +45,52 @@ void httpThreadTask(void* param) {
             String weatherPayload = http_res->http->getString();
             JsonDocument weatherDoc;
             DeserializationError error = deserializeJson(weatherDoc, weatherPayload);
+            
             if (!error && weatherDoc["status"] == "1") {
-                JsonArray lives = weatherDoc["lives"];
-                if (lives.size() > 0) {
-                    JsonObject live = lives[0];
-                    Weather* weather = &recv_data.weathers;
-
-                    // 时间转换
-                    time_t ts = recv_data.time;
-                    struct tm* timeinfo = localtime(&ts);
-                    strftime(weather->date, sizeof(weather->date), "%Y-%m-%d", timeinfo);
-                    weather->week = timeinfo->tm_wday % 7;
-
-                    // 天气数据填充
-                    strlcpy(weather->dayweather, live["weather"], sizeof(weather->dayweather));
-                    strlcpy(weather->nightweather, live["weather"], sizeof(weather->nightweather));
-                    weather->daytemp = live["temperature"];
-                    weather->nighttemp = live["temperature"];
-                    strlcpy(weather->daywind, live["winddirection"], sizeof(weather->daywind));
-                    strlcpy(weather->nightwind, live["winddirection"], sizeof(weather->nightwind));
+                // 清空历史数据
+                recv_data.day_num = 0;
+                
+                // 解析预报数据
+                JsonArray forecasts = weatherDoc["forecasts"];
+                if (forecasts.size() > 0) {
+                    JsonObject city_forecast = forecasts[0];
+                    JsonArray casts = city_forecast["casts"];
+                    
+                    // 限制最多获取7天数据
+                    recv_data.day_num = casts.size() > 7 ? 7 : casts.size();
+                    
+                    // 填充每日天气
+                    for (int i = 0; i < recv_data.day_num; i++) {
+                        JsonObject cast = casts[i];
+                        Weather* weather = &recv_data.weathers[i];
+                        
+                        // 直接使用预报中的日期和星期
+                        strlcpy(weather->date, cast["date"], sizeof(weather->date));
+                        weather->week = cast["week"].as<uint8_t>() % 7; // 转换到0-6范围
+                        
+                        // 解析天气要素
+                        strlcpy(weather->dayweather, cast["dayweather"], sizeof(weather->dayweather));
+                        strlcpy(weather->nightweather, cast["nightweather"], sizeof(weather->nightweather));
+                        weather->daytemp = cast["daytemp"].as<int8_t>();
+                        weather->nighttemp = cast["nighttemp"].as<int8_t>();
+                        strlcpy(weather->daywind, cast["daywind"], sizeof(weather->daywind));
+                        strlcpy(weather->nightwind, cast["nightwind"], sizeof(weather->nightwind));
+                    }
                 }
             }
         }
         http_res->http->end();
-
+        
         // 打印接收到的数据
         DEBUG_LOG("time: %lld", recv_data.time);
         DEBUG_LOG("Location: %s/%s (adcode: %d)", recv_data.province, recv_data.city, recv_data.adcode);
         DEBUG_LOG("Weather: ");
-        DEBUG_LOG("Date: %s Week: %d", recv_data.weathers.date, recv_data.weathers.week);
-        DEBUG_LOG("Day: %d°C %s %s", recv_data.weathers.daytemp, recv_data.weathers.dayweather, recv_data.weathers.daywind);
-        DEBUG_LOG("Night: %d°C %s %s", recv_data.weathers.nighttemp, recv_data.weathers.nightweather, recv_data.weathers.nightwind);
-
+        for (int i = 0; i < recv_data.day_num; i++) {
+            Weather* w = &recv_data.weathers[i];
+            DEBUG_LOG("[Day %d] %s 周%d", i+1, w->date, w->week + 1); // 周数显示恢复1-7
+            DEBUG_LOG("  白天: %s %d℃ %s风", w->dayweather, w->daytemp, w->daywind);
+            DEBUG_LOG("  夜间: %s %d℃ %s风", w->nightweather, w->nighttemp, w->nightwind);
+        }
 
         vTaskDelay(HTTP_SAMPLING_RATE);
     }

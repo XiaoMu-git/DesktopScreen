@@ -21,7 +21,8 @@ typedef struct {
     uint32_t adcode;
     char province[16];
     char city[16];
-    Weather weathers;
+    Weather weathers[7];
+    uint8_t day_num;
 } HttpData;
 
 // http 资源
