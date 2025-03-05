@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "typeinfo": "cpp",
+        "new": "cpp",
+        "random": "cpp",
+        "system_error": "cpp",
+        "string_view": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp",
+        "*.tcc": "cpp",
+        "algorithm": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "disabled",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
+}
