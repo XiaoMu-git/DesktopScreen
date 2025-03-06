@@ -17,6 +17,23 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_btn_to_pairing_clicked();
+
+    void on_btn_to_dashboard_clicked();
+
+    void on_btn_to_config_clicked();
+
+    void on_btn_to_logs_clicked();
+
+    void on_btn_to_help_clicked();
+
+    void on_btn_back_dashboard_1_clicked();
+
+    void on_btn_back_dashboard_2_clicked();
+
+    void on_btn_back_dashboard_3_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
